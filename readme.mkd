@@ -1,0 +1,184 @@
+That's a great project, especially for a Computer Science graduate interested in networking.
+
+If you want to build a Windows LAN chat application similar to **IP Messenger**, you can start with a fairly simple architecture.
+
+## How IP Messenger Works
+
+On the same LAN:
+
+1. User A opens the application.
+2. App broadcasts its presence to the network.
+3. User B receives the broadcast and appears in the user list.
+4. Users send messages directly using TCP/UDP sockets.
+5. No internet or central server is required.
+
+## Technology Stack
+
+Since you're comfortable with Python:
+
+### Backend
+
+* Python
+* `socket` module
+* `threading`
+* `sqlite3` (optional for chat history)
+
+### GUI
+
+* `PyQt6` (professional look)
+* or `Tkinter` (simple)
+
+## Architecture
+
+```text
++------------------+
+| User A           |
+| 192.168.1.10     |
++--------+---------+
+         |
+         | LAN
+         |
++--------+---------+
+| User B           |
+| 192.168.1.11     |
++------------------+
+```
+
+### Discovery
+
+Use UDP Broadcast:
+
+```python
+sock.sendto(
+    b"HELLO",
+    ('255.255.255.255', 5000)
+)
+```
+
+Every client listens on port 5000:
+
+```python
+sock.bind(('', 5000))
+```
+
+When a HELLO packet arrives:
+
+```python
+HELLO|Nandan-PC
+```
+
+Add that user to the online list.
+
+---
+
+## Messaging
+
+Use TCP for reliable message delivery.
+
+### Server Thread
+
+```python
+server.bind(("0.0.0.0", 6000))
+server.listen()
+```
+
+### Send Message
+
+```python
+client.connect(("192.168.1.11", 6000))
+client.send(message.encode())
+```
+
+---
+
+## Features for Version 1
+
+✅ Auto-discover users on LAN
+
+✅ One-to-one chat
+
+✅ Online users list
+
+✅ Username
+
+✅ Chat history
+
+---
+
+## Features for Version 2
+
+✅ Group chat
+
+✅ File transfer
+
+✅ Typing indicator
+
+✅ Message notifications
+
+✅ User avatars
+
+✅ Dark mode
+
+---
+
+## Features for Version 3
+
+✅ End-to-end encryption using:
+
+PyCryptodome
+
+Example:
+
+```python
+from Crypto.Cipher import AES
+```
+
+Encrypt messages before sending.
+
+---
+
+## Project Structure
+
+```text
+LANChat/
+│
+├── client.py
+├── server.py
+├── discovery.py
+├── encryption.py
+├── database.py
+│
+├── gui/
+│   ├── login.py
+│   ├── chat.py
+│   └── users.py
+│
+└── assets/
+```
+
+## Resume Value
+
+This project demonstrates:
+
+* Socket Programming
+* TCP/IP Networking
+* Multithreading
+* GUI Development
+* Database Handling
+* Cryptography
+* System Design
+
+These are skills commonly discussed in software engineering and cybersecurity interviews.
+
+For your skill level, I'd recommend:
+
+1. Build a console-based LAN chat first.
+2. Add automatic user discovery.
+3. Add a PyQt GUI.
+4. Add file transfer.
+5. Add AES encryption.
+
+The complete application can be built in about 1–2 weeks as a solid portfolio project.
+
+
+https://chatgpt.com/share/6a22ff5b-98f8-8323-8408-baa7fea30eb5
