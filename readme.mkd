@@ -1,5 +1,5 @@
 
-## How IP Messenger Works
+## How LANchat Messenger Works
 
 On the same LAN:
 
