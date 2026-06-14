@@ -13,13 +13,25 @@ class UsersPanel(ttk.Frame):
     """Listbox wrapper for online LAN users."""
 
     def __init__(self, master: tk.Misc, on_select: Callable[[Peer | None], None]) -> None:
-        super().__init__(master, padding=8)
+        super().__init__(master, padding=(14, 16, 12, 16), style="Sidebar.TFrame")
         self.on_select = on_select
         self._peers: list[Peer] = []
 
-        ttk.Label(self, text="Chats").pack(anchor="w")
-        self.listbox = tk.Listbox(self, height=18, exportselection=False)
-        self.listbox.pack(fill="both", expand=True, pady=(6, 0))
+
+        ttk.Label(self, text="LAN Chat", style="Brand.TLabel").pack(anchor="w")
+        ttk.Label(self, text="People nearby", style="SidebarMuted.TLabel").pack(anchor="w", pady=(2, 14))
+        self.listbox = tk.Listbox(
+            self,
+            height=18,
+            width=32,
+            exportselection=False,
+            activestyle="none",
+            borderwidth=0,
+            font=("Segoe UI", 10),
+            highlightthickness=0,
+            relief="flat",
+        )
+        self.listbox.pack(fill="both", expand=True)
         self.listbox.bind("<<ListboxSelect>>", self._handle_select)
 
     def set_peers(self, peers: list[Peer]) -> None:
@@ -30,12 +42,12 @@ class UsersPanel(ttk.Frame):
         self._peers = sorted(peers, key=lambda peer: peer.username.lower())
 
         self.listbox.delete(0, tk.END)
-        self.listbox.insert(tk.END, "[GR] Group Chat  (all online)")
+        self.listbox.insert(tk.END, "[GR]  Group Chat     all online")
         selected_index = 0 if group_selected else None
         for index, peer in enumerate(self._peers):
             self.listbox.insert(
                 tk.END,
-                f"[{self._initials(peer.username)}] {peer.username}  ({peer.ip}:{peer.tcp_port})",
+                f"[{self._initials(peer.username)}]  {peer.username}     {peer.ip}:{peer.tcp_port}",
             )
             if peer.peer_id == selected_id:
                 selected_index = index + 1
@@ -56,6 +68,14 @@ class UsersPanel(ttk.Frame):
         selection = self.listbox.curselection()
         if selection:
             self.on_select(self.selected_peer())
+
+    def apply_theme(self, colors: dict[str, str]) -> None:
+        self.listbox.configure(
+            background=colors["sidebar"],
+            foreground=colors["text"],
+            selectbackground=colors["selected"],
+            selectforeground=colors["selected_text"],
+        )
 
     @staticmethod
     def _initials(username: str) -> str:

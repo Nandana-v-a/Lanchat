@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import tkinter as tk
-from tkinter import ttk
 from typing import Callable
 
 
@@ -23,23 +22,42 @@ class MessageNotifier:
         popup.resizable(False, False)
         popup.attributes("-topmost", True)
         popup.overrideredirect(True)
-        popup.configure(background="#2c2c2c")
+        popup.configure(background="#2563eb")
 
-        frame = ttk.Frame(popup, padding=(12, 10, 12, 10))
-        frame.pack(fill="both", expand=True)
+        frame = tk.Frame(popup, background="#ffffff", padx=14, pady=12)
+        frame.pack(fill="both", expand=True, padx=(4, 0))
 
-        sender = ttk.Label(frame, text=sender_name, font=("Segoe UI", 10, "bold"))
+        title = tk.Label(
+            frame,
+            text="New LANChat message",
+            background="#ffffff",
+            foreground="#667085",
+            font=("Segoe UI", 8, "bold"),
+        )
+        title.pack(anchor="w")
+
+        sender = tk.Label(
+            frame,
+            text=sender_name,
+            background="#ffffff",
+            foreground="#18202a",
+            font=("Segoe UI", 11, "bold"),
+        )
         sender.pack(anchor="w")
 
-        preview = ttk.Label(
+        preview = tk.Label(
             frame,
             text=self._preview(body),
+            background="#ffffff",
+            foreground="#344054",
+            font=("Segoe UI", 9),
             wraplength=280,
             justify="left",
         )
-        preview.pack(anchor="w", pady=(4, 0))
+        preview.pack(anchor="w", pady=(6, 0))
 
-        for widget in (popup, frame, sender, preview):
+        for widget in (popup, frame, title, sender, preview):
+            widget.configure(cursor="hand2")
             widget.bind("<Button-1>", lambda _event, selected_id=peer_id: self._open(selected_id))
 
         popup.update_idletasks()
