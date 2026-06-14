@@ -1,4 +1,4 @@
-"""TCP server responsibilities for receiving chat messages."""
+"""TCP server responsibilities for receiving chat messages and events."""
 
 from __future__ import annotations
 
@@ -19,9 +19,29 @@ class ChatMessage:
     sender_name: str
     sender_ip: str
     body: str
+    is_group: bool = False
 
 
-MessageCallback = Callable[[ChatMessage], None]
+@dataclass(frozen=True)
+class TypingEvent:
+    sender_id: str
+    sender_name: str
+    sender_ip: str
+    is_typing: bool
+
+
+@dataclass(frozen=True)
+class FileTransfer:
+    sender_id: str
+    sender_name: str
+    sender_ip: str
+    filename: str
+    data: bytes
+    is_group: bool = False
+
+
+ServerEvent = ChatMessage | TypingEvent | FileTransfer
+MessageCallback = Callable[[ServerEvent], None]
 
 
 class MessageServer:
@@ -86,21 +106,69 @@ class MessageServer:
     def _handle_client(self, client: socket.socket, sender_ip: str) -> None:
         with client:
             try:
-                raw = client.recv(65536)
+                raw = self._recv_all(client)
                 payload = json.loads(raw.decode("utf-8"))
             except (OSError, UnicodeDecodeError, json.JSONDecodeError):
                 return
 
-        if payload.get("type") != "message":
-            return
-
         sender_id = str(payload.get("sender_id", ""))
         sender_name = str(payload.get("sender_name", "Unknown"))
-        body = str(payload.get("body", "")).strip()
-        if not sender_id or not body:
+        if not sender_id:
             return
 
-        self.on_message(ChatMessage(sender_id, sender_name, sender_ip, body))
+        event_type = payload.get("type")
+        if event_type == "message":
+            body = str(payload.get("body", "")).strip()
+            if body:
+                self.on_message(
+                    ChatMessage(
+                        sender_id,
+                        sender_name,
+                        sender_ip,
+                        body,
+                        bool(payload.get("is_group", False)),
+                    )
+                )
+        elif event_type == "typing":
+            self.on_message(
+                TypingEvent(
+                    sender_id,
+                    sender_name,
+                    sender_ip,
+                    bool(payload.get("is_typing", False)),
+                )
+            )
+        elif event_type == "file":
+            filename = str(payload.get("filename", "")).strip()
+            data_text = str(payload.get("data", ""))
+            if not filename or not data_text:
+                return
+            try:
+                import base64
+
+                data = base64.b64decode(data_text.encode("ascii"), validate=True)
+            except (ValueError, UnicodeEncodeError):
+                return
+            self.on_message(
+                FileTransfer(
+                    sender_id,
+                    sender_name,
+                    sender_ip,
+                    filename,
+                    data,
+                    bool(payload.get("is_group", False)),
+                )
+            )
+
+    @staticmethod
+    def _recv_all(client: socket.socket) -> bytes:
+        chunks: list[bytes] = []
+        while True:
+            chunk = client.recv(65536)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        return b"".join(chunks)
 
 
 def send_message(
@@ -109,14 +177,57 @@ def send_message(
     sender_id: str,
     sender_name: str,
     body: str,
+    is_group: bool = False,
     timeout: float = 5,
 ) -> None:
-    payload = {
+    _send_payload(host, port, {
         "type": "message",
         "sender_id": sender_id,
         "sender_name": sender_name,
         "body": body,
-    }
+        "is_group": is_group,
+    }, timeout)
+
+
+def send_typing(
+    host: str,
+    port: int,
+    sender_id: str,
+    sender_name: str,
+    is_typing: bool,
+    timeout: float = 2,
+) -> None:
+    _send_payload(host, port, {
+        "type": "typing",
+        "sender_id": sender_id,
+        "sender_name": sender_name,
+        "is_typing": is_typing,
+    }, timeout)
+
+
+def send_file(
+    host: str,
+    port: int,
+    sender_id: str,
+    sender_name: str,
+    filename: str,
+    data: bytes,
+    is_group: bool = False,
+    timeout: float = 15,
+) -> None:
+    import base64
+
+    _send_payload(host, port, {
+        "type": "file",
+        "sender_id": sender_id,
+        "sender_name": sender_name,
+        "filename": filename,
+        "data": base64.b64encode(data).decode("ascii"),
+        "is_group": is_group,
+    }, timeout)
+
+
+def _send_payload(host: str, port: int, payload: dict[str, object], timeout: float) -> None:
     encoded = json.dumps(payload).encode("utf-8")
     with socket.create_connection((host, port), timeout=timeout) as sock:
         sock.sendall(encoded)
