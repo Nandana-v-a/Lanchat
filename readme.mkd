@@ -1,6 +1,3 @@
-That's a great project, especially for a Computer Science graduate interested in networking.
-
-If you want to build a Windows LAN chat application similar to **IP Messenger**, you can start with a fairly simple architecture.
 
 ## How IP Messenger Works
 
@@ -13,8 +10,6 @@ On the same LAN:
 5. No internet or central server is required.
 
 ## Technology Stack
-
-Since you're comfortable with Python:
 
 ### Backend
 
@@ -168,9 +163,6 @@ This project demonstrates:
 * Cryptography
 * System Design
 
-These are skills commonly discussed in software engineering and cybersecurity interviews.
-
-For your skill level, I'd recommend:
 
 1. Build a console-based LAN chat first.
 2. Add automatic user discovery.
